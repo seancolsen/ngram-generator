@@ -1,0 +1,53 @@
+#!/usr/bin/env php
+<?php
+
+const TOTAL_NGRAMS = 60;
+const MIN_NGRAM_LENGTH = 2;
+const MAX_NGRAM_LENGTH = 5;
+const LINE_WRAP_CHARACTERS = 80;
+
+$lines = file(__DIR__ . '/' . 'word-frequencies.txt');
+
+$words = [];
+$runningTotal = 0;
+foreach ($lines as $line) {
+    $parts = explode(' ', $line);
+    $word = $parts[0];
+    $frequency = $parts[1];
+    $runningTotal += $frequency;
+    $words[$word] = $runningTotal;
+}
+
+$ngrams = [];
+while (count($ngrams) < TOTAL_NGRAMS) {
+    $seed = rand(0, $runningTotal);
+    $ngramLength = rand(MIN_NGRAM_LENGTH, MAX_NGRAM_LENGTH);
+    foreach ($words as $word => $score) {
+        if ($seed < $score) {
+            $wordLength = strlen($word);
+            if ($wordLength >= $ngramLength) {
+                $position = rand(0, $wordLength - $ngramLength);
+                $ngram = substr($word, $position, $ngramLength);
+                $new = array_fill(0, $ngramLength, $ngram);
+                $ngrams = array_merge($ngrams, $new);
+            }
+            break;
+        }
+    }
+}
+
+$lines = [""];
+foreach ($ngrams as $ngram) {
+    $lineCount = count($lines);
+    if (strlen($lines[$lineCount-1]) <= LINE_WRAP_CHARACTERS - (strlen($ngram) + 1)) {
+        if (strlen($lines[$lineCount-1]) > 0) {
+            $lines[$lineCount-1] .= ' ';
+        }
+        $lines[$lineCount-1] .= $ngram;
+    }
+    else {
+        $lines[] = $ngram;
+    }
+}
+
+echo implode("\n", $lines);
